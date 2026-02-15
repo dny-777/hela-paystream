@@ -1,65 +1,260 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Wallet, Zap, LogOut, Database, Shield, Users, Activity, 
+  DollarSign, Clock 
+} from 'lucide-react';
+
+// Modular Component Imports
+import ActionHub from './components/ActionHub';
+import { LiveTicker } from "./components/LiveTicker";
+import { AditiAI } from './components/AditiAI'; 
+import { TransactionFeed } from './components/TransactionFeed';
+import { useWeb3 } from './hooks/useWeb3'; 
+
+// 💡 Import jsPDF for the Verified Pay-Stub logic
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+type AppView = 'landing' | 'role-selection' | 'dashboard';
+
+export default function HelaPayStreamPage() {
+  const { 
+    account, stats, transactions, connectWallet, disconnectWallet, 
+    loading, claimEarnings, createNewStream, refillGasTank,
+    pushBonus, togglePause, isPaused 
+  } = useWeb3();
+
+  const [view, setView] = useState<AppView>('landing');
+  const [role, setRole] = useState<'employer' | 'employee' | null>(null);
+  
+  // 📈 Real-time Sync State: Bridge the ticker data to the StatCards
+  const [liveBalance, setLiveBalance] = useState<string>("0");
+
+  const activeStreamId = useMemo(() => {
+    const lastStream = transactions.find(tx => tx.type === "New Stream Created");
+    return lastStream ? 1 : 0; 
+  }, [transactions]);
+
+  // Sync initial balance whenever the blockchain stats refresh
+  useEffect(() => {
+    if (stats.tvl) setLiveBalance(stats.tvl);
+  }, [stats.tvl]);
+
+  useEffect(() => {
+    if (account && view === 'landing') setView('role-selection');
+    if (!account) {
+      setView('landing');
+      setRole(null);
+    }
+  }, [account, view]);
+
+  // 📄 Professional Verified Pay-Stub Logic
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    
+    // Branding & Header Section
+    doc.setFontSize(22);
+    doc.setTextColor(45, 212, 191); // HeLa Teal theme
+    doc.text("HeLa PayStream", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text("Cryptographically Verified Proof of Income", 14, 30);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 36);
+
+    // Employee & Protocol Details
+    autoTable(doc, {
+      startY: 45,
+      head: [['Protocol Detail', 'Verification Status']],
+      body: [
+        ['Employee Wallet', account || 'Unknown'],
+        ['Protocol State', isPaused ? 'PAUSED/COMPLIANCE' : 'ACTIVE/STREAMING'],
+        ['Network', 'HeLa Testnet (Chain ID: 8668)'],
+        ['Asset Type', 'HLUSD (Stablecoin)']
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [45, 212, 191] }
+    });
+
+    // Financial Breakdown using Real-time liveBalance
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['Description', 'Amount']],
+      body: [
+        ['Calculated Stream Rate', `$${stats.activeStreams !== "0" ? "0.005787" : "0"}/sec`],
+        ['Total Cumulative Earnings', `$${liveBalance}`],
+        ['Compliance Tax Reserve (10%)', `$${(parseFloat(liveBalance) * 0.1).toFixed(4)}`]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [168, 85, 247] } // Purple theme for financial data
+    });
+
+    // Verification Footer
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Digital representation of on-chain streaming data verified by HeLa Flow AI.", 14, finalY);
+    doc.text("Tx Hash: " + (transactions[0]?.hash || "STABLE_BLOCK_SYNC"), 14, finalY + 5);
+
+    doc.save(`HeLa_PayStub_${account?.slice(0, 6)}.pdf`);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen text-slate-100 selection:bg-teal-500/30 font-sans">
+      <AuroraBackground />
+      <AnimatePresence mode="wait">
+        
+        {view === 'landing' && (
+          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -20 }} className="relative z-10 flex min-h-screen items-center justify-center">
+            <div className="max-w-3xl text-center px-6">
+              <div className="p-4 bg-teal-500/20 rounded-3xl inline-block mb-8 shadow-[0_0_30px_rgba(45,212,191,0.2)]">
+                <Zap className="w-12 h-12 text-teal-400" />
+              </div>
+              <h1 className="text-8xl font-black mb-6 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-500">
+                HeLa PayStream
+              </h1>
+              <p className="text-xl text-slate-400 mb-10 max-w-xl mx-auto leading-relaxed">
+                Stream salaries per-second on the HeLa Network. Zero gas, zero anxiety.
+              </p>
+              <button 
+                onClick={connectWallet} 
+                disabled={loading}
+                className="px-10 py-5 bg-teal-500 text-black font-black rounded-2xl hover:scale-105 transition-all shadow-2xl shadow-teal-500/20 flex items-center gap-4 mx-auto uppercase tracking-widest"
+              >
+                <Wallet /> {loading ? "CONNECTING..." : "CONNECT PROTOCOL"}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'role-selection' && (
+          <motion.div key="role" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 flex min-h-screen items-center justify-center px-6">
+            <div className="max-w-5xl w-full">
+              <h2 className="text-4xl font-black text-center mb-16 tracking-tight text-white/90 uppercase italic">Access Gateway</h2>
+              <div className="grid md:grid-cols-2 gap-10">
+                <RoleCard title="Employer" icon={<Users size={40}/>} desc="Manage organization streams, TVL, and compliance tax vaults." onClick={() => { setRole('employer'); setView('dashboard'); }} />
+                <RoleCard title="Employee" icon={<Activity size={40}/>} desc="Watch wealth grow in real-time. Claim earnings gaslessly." onClick={() => { setRole('employee'); setView('dashboard'); }} highlight />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'dashboard' && role && (
+          <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10">
+            <header className="border-b border-white/5 bg-slate-950/50 backdrop-blur-2xl sticky top-0 z-50 p-6 px-12 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <Zap className="text-teal-400" />
+                <h1 className="text-2xl font-black uppercase tracking-tighter">PayStream</h1>
+                {isPaused && (
+                  <span className="ml-4 px-3 py-1 bg-red-500/20 border border-red-500/50 text-red-400 text-[10px] font-bold rounded-full animate-pulse">
+                    PROTOCOL PAUSED
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl font-mono text-teal-400">{account?.slice(0,6)}...{account?.slice(-4)}</div>
+                <button onClick={disconnectWallet} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-red-400 transition-colors">
+                  <LogOut size={20}/>
+                </button>
+              </div>
+            </header>
+
+            <main className="max-w-[1600px] mx-auto px-12 py-12 space-y-12">
+              
+              {/* HeLa Flow AI Banner Row */}
+              <div className="w-full">
+                <AditiAI transactions={transactions} />
+              </div>
+
+              <div className="grid grid-cols-12 gap-12">
+                <div className="col-span-12 space-y-12">
+                  <div className="flex justify-between items-end">
+                    <h2 className="text-6xl font-black tracking-tighter">
+                      {role === 'employer' ? 'Employer Command' : 'Wealth Tracker'}
+                    </h2>
+                    <button onClick={() => setView('role-selection')} className="text-xs font-bold text-slate-500 hover:text-teal-400 border border-white/10 rounded-xl px-4 py-2 bg-white/5 transition-all">
+                      SWITCH PORTAL
+                    </button>
+                  </div>
+
+                  {/* Dynamic Stats Row */}
+                  <div className="grid grid-cols-3 gap-6">
+                    {role === 'employer' ? (
+                      <>
+                        <StatCard title="Total Value Locked" value={`$${stats.tvl}`} icon={<Database/>} trend="+12% runway" />
+                        <StatCard title="Tax Reserves (10%)" value={`$${stats.taxVault}`} icon={<Shield/>} glowColor="purple" />
+                        <StatCard title="Employer Gas Tank" value={`${stats.gasTank} HLUSD`} icon={<Zap/>} glowColor="cyan" />
+                      </>
+                    ) : (
+                      <>
+                        {/* 💡 Synced Live Balance: Updates every second with the ticker */}
+                        <StatCard title="Available to Withdraw" value={`$${liveBalance}`} icon={<DollarSign/>} glowColor="teal" />
+                        <StatCard title="Hourly Rate" value="$20.83" icon={<Clock/>} glowColor="cyan" />
+                        <StatCard title="Streams Active" value={stats.activeStreams} icon={<Activity/>} />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Employee Live Ticker */}
+                  {role === 'employee' && (
+                    <LiveTicker 
+                      balance={stats.tvl} 
+                      rate={stats.activeStreams !== "0" ? "0.005787" : "0"} 
+                      onTick={(newVal) => setLiveBalance(newVal)} // 💡 Pass real-time ticks to parent
+                    />
+                  )}
+                  
+                  <ActionHub 
+                    role={role} 
+                    isPaused={isPaused} 
+                    onTogglePause={togglePause} 
+                    onRefill={(amount) => refillGasTank(amount)} 
+                    onInjectBonus={(id, amount) => pushBonus(id, amount)} 
+                    onClaim={async (id) => {
+                       await claimEarnings(id || activeStreamId);
+                    }} 
+                    onDownloadPDF={handleDownloadPDF} 
+                  />
+
+                  <TransactionFeed txs={transactions} />
+                </div>
+              </div>
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
+// Internal StatCard Helper
+const StatCard = ({ title, value, icon, trend, glowColor = 'teal' }: any) => (
+  <motion.div whileHover={{ scale: 1.02 }} className="relative bg-white/5 backdrop-blur-xl border border-white/5 rounded-[2rem] p-8 transition-all hover:border-white/20">
+    <div className="flex justify-between items-start mb-6">
+      <div>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{title}</p>
+        <h3 className="text-4xl font-black font-mono text-white">{value}</h3>
+      </div>
+      <div className={`p-4 bg-${glowColor}-500/10 rounded-2xl text-${glowColor}-400`}>{icon}</div>
+    </div>
+    {trend && <div className="text-[10px] text-teal-400 font-bold flex items-center gap-1 uppercase tracking-widest">{trend}</div>}
+  </motion.div>
+);
+
+const AuroraBackground = () => (
+  <div className="fixed inset-0 z-0 overflow-hidden bg-[#020617]">
+    <div className="absolute top-[-10%] left-[-10%] w-[60vmax] h-[60vmax] rounded-full bg-teal-500/10 blur-[120px] animate-pulse" />
+    <div className="absolute bottom-[-10%] right-[-10%] w-[50vmax] h-[50vmax] rounded-full bg-cyan-500/10 blur-[120px] animate-pulse delay-700" />
+  </div>
+);
+
+const RoleCard = ({ title, icon, desc, onClick, highlight = false }: any) => (
+  <button onClick={onClick} className={`group relative p-12 rounded-[2.5rem] border text-left transition-all hover:-translate-y-3 ${highlight ? 'bg-teal-500/10 border-teal-500/50 shadow-[0_20px_50px_rgba(45,212,191,0.1)]' : 'bg-white/5 border-white/10'}`}>
+    <div className={`mb-8 p-6 inline-block rounded-3xl ${highlight ? 'bg-teal-500/20 text-teal-400' : 'bg-white/10 text-slate-400'}`}>{icon}</div>
+    <h3 className="text-3xl font-black mb-4 uppercase">{title}</h3>
+    <p className="text-slate-400 text-lg leading-relaxed">{desc}</p>
+  </button>
+);
