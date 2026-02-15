@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+⚡ HeLa PayStream: Gasless Real-Time Payroll
+HeLa PayStream is a revolutionary payroll protocol built on the HeLa Official Runtime Testnet. It transforms stagnant monthly salaries into dynamic, per-second revenue streams. By utilizing a unique Gas Sponsorship mechanism, we've removed the friction of Web3, allowing employees to claim their earnings with zero gas fees.
 
-## Getting Started
+🌍 Connecting to HeLa Network
+To interact with this dApp, configure your MetaMask wallet to the HeLa Official Runtime Testnet:
 
-First, run the development server:
+Network Name: HeLa Official Runtime Testnet
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+New RPC URL: https://testnet-rpc.helachain.com
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Chain ID: 666888
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Currency Symbol: HLUSD
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Block Explorer URL: https://testnet-blockexplorer.helachain.com
 
-## Learn More
+🚀 Hero Features
+Real-Time Wealth Tracker: Salaries are calculated on-chain every block via our earnedBalance logic. Watch your earnings grow in real-time.
 
-To learn more about Next.js, take a look at the following resources:
+Gasless Claiming: Our Gas Sponsorship Tank allows employers to prepay transaction fees. Employees withdraw their salary with zero gas fees.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Autonomous Compliance: An integrated Tax Vault automatically reserves a customizable percentage (e.g., 10%) of every claim for seamless reporting.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+HR Batch Onboarding: Initialize multiple employee streams in a single, gas-efficient transaction.
 
-## Deploy on Vercel
+🍒 The "Cherry on Top" Features
+🤖 HeLa Flow AI (AditiAI): An autonomous auditor that monitors the blockchain to detect anomalies and provide predictive financial runway analysis.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+📄 Verified Pay-Stub Generator: One-click PDF export using jsPDF. Generates a cryptographically verified proof of income including wallet addresses, cumulative earnings, and tax deductions.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+📖 How to Use (Demo Guide)
+To experience the full protocol, use two separate MetaMask accounts.
+
+1. The Employer (Account 1)
+Connect Wallet: Select the Employer role.
+
+Fund Gas Tank: Deposit HLUSD into the Gas Sponsorship Tank to enable gasless withdrawals for your team.
+
+Initialize Stream: Enter the Employee's wallet address (Account 2), set the rate, and click Initialize Stream.
+
+2. The Employee (Account 2)
+Switch Account: Open the dApp in a separate browser window and connect with Account 2.
+
+Wealth Tracker: Watch your active stream ticking up in real-time.
+
+Gasless Withdrawal: Click "Withdraw Now". The transaction cost is covered by the Employer, requiring 0 HLUSD from the employee.
+
+🏗️ Technical Architecture
+Smart Contract: HeLaPayStreamMaster.sol – Manages the real-time math engine and gas sponsorship logic.
+
+Frontend: Next.js 14, Tailwind CSS, Ethers.js.
+
+Backend: Supabase for real-time transaction ledgering.
+
+🏁 Installation
+Clone the Repo: git clone <repo-url>
+
+Install Dependencies: npm install
+
+Run Locally: npm run dev
